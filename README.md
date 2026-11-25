@@ -1,18 +1,16 @@
-# 🌤️ Responsi Flutter - Aplikasi Cuaca (Weather App)
+Nama: Nayla Octavia Ramadhani
 
-Aplikasi ramalan cuaca modern yang dibangun menggunakan framework **Flutter** dengan bahasa pemrograman **Dart**, mengimplementasikan arsitektur **Model-View-ViewModel (MVVM)**, state management **Provider**, integrasi REST API dari **Open-Meteo**, serta penyimpanan lokal menggunakan **SharedPreferences**.
+NIM: H1D024115
+
+Shift KRS: I
+
+Shift Sekarang: E
 
 ---
 
-## 📌 Daftar Isi
-1. [Fitur Utama](#-fitur-utama)
-2. [Struktur Proyek](#-struktur-proyek)
-3. [Penerapan Arsitektur MVVM](#-penerapan-arsitektur-mvvm)
-4. [Implementasi API Open-Meteo](#-implementasi-api-open-meteo)
-5. [Local Storage](#-local-storage)
-6. [Tampilan Layar (Screenshots)](#-tampilan-layar-screenshots)
-7. [Panduan Menjalankan Aplikasi](#-panduan-menjalankan-aplikasi)
-8. [Panduan Penjelasan Kode (Untuk Video Presentasi)](#-panduan-penjelasan-kode-untuk-video-presentasi)
+# 🌤️ Responsi Flutter - Aplikasi Cuaca (Weather App)
+
+Aplikasi ramalan cuaca modern yang dibangun menggunakan framework **Flutter** dengan bahasa pemrograman **Dart**, mengimplementasikan arsitektur **Model-View-ViewModel (MVVM)**, state management **Provider**, integrasi REST API dari **Open-Meteo**, serta penyimpanan lokal menggunakan **SharedPreferences**.
 
 ---
 
@@ -188,26 +186,3 @@ Pastikan Flutter SDK sudah terpasang di sistem Anda.
    ```bash
    flutter build apk --release
    ```
-
----
-
-## 🎙️ Panduan Penjelasan Kode (Untuk Video Presentasi)
-
-Ketika membuat video penjelasan kode, Anda dapat menjelaskan alur berikut secara sistematis:
-
-1. **Pengenalan Singkat:**
-   - Perkenalkan nama, topik responsi (Aplikasi Cuaca Flutter Open-Meteo).
-   - Jelaskan bahwa aplikasi terdiri dari minimal 2 layar: `HomeScreen` dan `SearchScreen`.
-
-2. **Arsitektur MVVM & State Management:**
-   - Tunjukkan file `lib/models/weather_model.dart` dan `location_model.dart` sebagai representasi entitas data.
-   - Buka `lib/viewmodels/weather_viewmodel.dart`: Jelaskan fungsi `initialize()`, `setLocation()`, `refresh()`, serta pemanggilan `notifyListeners()` untuk memperbarui antarmuka secara reaktif tanpa `setState` berulang di banyak tempat.
-
-3. **Koneksi REST API & Local Storage:**
-   - Tunjukkan `lib/services/weather_api_service.dart`: Jelaskan endpoint `forecast` dan `geocoding` Open-Meteo, penggunaan parameter query, penanganan error (`SocketException`, `TimeoutException`), serta parsing JSON.
-   - Tunjukkan `lib/services/local_storage_service.dart`: Jelaskan bagaimana SharedPreferences menyimpan daftar favorit dan riwayat pencarian dalam bentuk string JSON.
-
-4. **Demo Antarmuka Aplikasi:**
-   - Tampilkan kartu cuaca utama, detail 4 indikator (kelembapan, angin, curah hujan, peluang hujan), serta ramalan 7 hari ke depan.
-   - Buka layar pencarian, ketik nama kota (contoh: "Surabaya" atau "Tokyo"), pilih kota dari hasil API, dan perlihatkan bagaimana cuaca di Home langsung berganti sesuai kota yang baru.
-   - Tunjukkan fitur tambah ke favorit dan riwayat pencarian yang langsung tersimpan.
