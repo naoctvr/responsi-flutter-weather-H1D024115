@@ -159,12 +159,9 @@ Aplikasi mengimplementasikan **SharedPreferences** melalui `LocalStorageService`
 
 ## 📸 Tampilan Layar (Screenshots)
 
-> *Letakkan tangkapan layar (screenshot) aplikasi pada folder `assets/screenshots/` atau lampirkan di bawah ini:*
-
-| Home Screen (Kondisi Cuaca) | Search Screen (Pencarian & Favorit) |
+| Home Screen (Kondisi Cuaca & Ramalan 7 Hari) | Search Screen (Pencarian & Kelola Lokasi) |
 |:---:|:---:|
-| *(Screenshot Home Screen)* | *(Screenshot Search Screen)* |
-| ![Home Screen Placeholder](https://via.placeholder.com/300x600.png?text=Home+Screen) | ![Search Screen Placeholder](https://via.placeholder.com/300x600.png?text=Search+Screen) |
+| <img src="assets/screenshots/home_screen.png" width="280" alt="Home Screen" /> | <img src="assets/screenshots/search_screen.png" width="280" alt="Search Screen" /> |
 
 ---
 
