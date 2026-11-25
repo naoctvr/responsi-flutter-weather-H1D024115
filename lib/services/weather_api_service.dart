@@ -10,20 +10,22 @@ class WeatherApiService {
   static const String _geocodingBaseUrl = 'https://geocoding-api.open-meteo.com/v1/search';
   static const Duration _timeoutDuration = Duration(seconds: 12);
 
-  // Kamus alias pencarian kota & provinsi populer di Indonesia
+  // Kamus alias nama kota dan provinsi populer di Indonesia
   static const Map<String, List<String>> _indonesianAliases = {
     'lampung': ['Bandarlampung', 'Bandar Lampung'],
     'jogja': ['Yogyakarta'],
     'yogya': ['Yogyakarta'],
+    'solo': ['Surakarta'],
+    'surakarta': ['Solo'],
     'aceh': ['Banda Aceh'],
     'bali': ['Denpasar'],
     'lombok': ['Mataram'],
     'papua': ['Jayapura'],
     'ujung pandang': ['Makassar'],
     'sulsel': ['Makassar'],
-    'sumut': ['Medan'],
-    'sumbar': ['Padang'],
-    'sumsel': ['Palembang'],
+    'sumut': ['Kota Medan'],
+    'sumbar': ['Kota Padang'],
+    'sumsel': ['Kota Palembang'],
     'riau': ['Pekanbaru'],
     'kalsel': ['Banjarmasin'],
     'kaltim': ['Samarinda', 'Balikpapan'],
@@ -78,19 +80,22 @@ class WeatherApiService {
     }
   }
 
-  /// Mencari lokasi kota berdasarkan input teks nama kota dengan pemeringkatan pintar
+  /// Mencari lokasi kota dengan pembersihan duplikat dan pemfilteran cerdas
   Future<List<LocationModel>> searchLocation(String query) async {
     final trimmedQuery = query.trim().toLowerCase();
     if (trimmedQuery.isEmpty) return [];
 
     try {
-      // 1. Kumpulkan kueri utama dan alias yang relevan
+      // 1. Kumpulkan kueri utama, alias, dan variasi 'Kota <nama>'
       final queriesToFetch = <String>[trimmedQuery];
       if (_indonesianAliases.containsKey(trimmedQuery)) {
         queriesToFetch.addAll(_indonesianAliases[trimmedQuery]!);
       }
+      if (!trimmedQuery.startsWith('kota ') && trimmedQuery.length >= 3) {
+        queriesToFetch.add('Kota $trimmedQuery');
+      }
 
-      final List<LocationModel> allResults = [];
+      final List<LocationModel> rawResults = [];
       final Set<int> seenIds = {};
 
       for (final q in queriesToFetch) {
@@ -99,42 +104,122 @@ class WeatherApiService {
           if (item.id != null) {
             if (!seenIds.contains(item.id)) {
               seenIds.add(item.id!);
-              allResults.add(item);
+              rawResults.add(item);
             }
           } else {
-            if (!allResults.contains(item)) {
-              allResults.add(item);
-            }
+            rawResults.add(item);
           }
         }
       }
 
-      if (allResults.isEmpty) return [];
+      if (rawResults.isEmpty) return [];
+
+      final aliases = _indonesianAliases[trimmedQuery]?.map((a) => a.toLowerCase()).toList() ?? [];
 
       // 2. Cek apakah ada hasil dari Indonesia
-      final hasIndonesianResults = allResults.any(
+      final hasIndonesianResults = rawResults.any(
         (loc) => loc.countryCode?.toUpperCase() == 'ID' || loc.country?.toLowerCase() == 'indonesia',
       );
 
-      // 3. Filter: Jika ada hasil dari Indonesia, utamakan Indonesia & hapus kota terpencil luar negeri yang membingungkan
-      final filteredResults = allResults.where((loc) {
-        final isIndonesia =
-            loc.countryCode?.toUpperCase() == 'ID' || loc.country?.toLowerCase() == 'indonesia';
-        if (hasIndonesianResults && !isIndonesia) {
-          // Hanya izinkan hasil luar negeri jika memiliki populasi besar (misal kota metropolitan dunia)
-          return (loc.population ?? 0) > 200000;
+      // 3. Filter: Jika ada hasil dari Indonesia, BUANG SEMUA HASIL LUAR NEGERI
+      List<LocationModel> pool = hasIndonesianResults
+          ? rawResults
+              .where((loc) =>
+                  loc.countryCode?.toUpperCase() == 'ID' ||
+                  loc.country?.toLowerCase() == 'indonesia')
+              .toList()
+          : rawResults;
+
+      // Cek apakah ada kota / entitas utama dengan populasi signifikan atau status ibukota
+      final hasMajorCity = pool.any(
+        (loc) =>
+            (loc.population != null && loc.population! >= 20000) ||
+            (loc.featureCode != null && ['PPLC', 'PPLA', 'PPLA2'].contains(loc.featureCode)) ||
+            loc.name.toLowerCase().startsWith('kota '),
+      );
+
+      // Cek apakah ada hasil yang provinsinya cocok dengan nama pencarian (misal "lampung" -> "Provinsi Lampung")
+      final hasMatchingProvince = pool.any(
+        (loc) => loc.admin1?.toLowerCase().contains(trimmedQuery) ?? false,
+      );
+
+      // 4. Buang noise / kampung kecil tanpa data populasi & non-kota:
+      pool = pool.where((loc) {
+        // Buang bandara/pulau jika kota/pemukiman tersedia
+        if (loc.featureCode == 'AIRP' || loc.featureCode == 'ISL') {
+          return false;
         }
+
+        final nameLower = loc.name.toLowerCase();
+        final isMajorEntity = (loc.population != null && loc.population! >= 20000) ||
+            (loc.featureCode != null && ['PPLC', 'PPLA', 'PPLA2'].contains(loc.featureCode)) ||
+            nameLower.startsWith('kota ');
+
+        // Jika sudah ada kota utama (e.g. Jambi, Medan, Solo, Bogor):
+        // Buang semua kampung kecil (PPL/PPLA4) tanpa populasi atau populasi < 5000!
+        if (hasMajorCity && !isMajorEntity) {
+          return false;
+        }
+
+        // Jika mencari nama provinsi (misal lampung), buang desa di provinsi lain
+        if (hasMatchingProvince) {
+          final inTargetProvince = loc.admin1?.toLowerCase().contains(trimmedQuery) ?? false;
+          if (!inTargetProvince && (loc.population == null || loc.population! < 10000)) {
+            return false;
+          }
+        }
+
+        // Cek kecocokan nama atau alias
+        final isExactMatch = nameLower == trimmedQuery ||
+            nameLower == 'kota $trimmedQuery' ||
+            nameLower == 'kabupaten $trimmedQuery' ||
+            aliases.any((alias) => nameLower == alias || nameLower == 'kota $alias');
+
+        final isMinorHamlet = (loc.population == null || loc.population! < 5000) &&
+            (loc.featureCode == null || ['PPL', 'PPLA4', 'PPLA3'].contains(loc.featureCode));
+
+        if (isMinorHamlet && !isExactMatch) {
+          return false;
+        }
+
         return true;
       }).toList();
 
-      // 4. Hitung skor relevansi agar kota penting/ibu kota selalu di atas
-      filteredResults.sort((a, b) {
-        final scoreA = _calculateRelevanceScore(a, trimmedQuery);
-        final scoreB = _calculateRelevanceScore(b, trimmedQuery);
-        return scoreB.compareTo(scoreA); // Urutan terbesar ke terkecil
+      // 5. DEDUPLIKASI KOTA YANG SAMA:
+      // Kelompokkan berdasarkan base name (tanpa kata 'Kota', 'Kabupaten', 'Bandar')
+      final Map<String, List<LocationModel>> groupedByName = {};
+      for (final loc in pool) {
+        final baseKey = loc.name
+            .toLowerCase()
+            .replaceAll('kota ', '')
+            .replaceAll('kabupaten ', '')
+            .replaceAll('kodya ', '')
+            .replaceAll('bandar ', '')
+            .trim();
+        groupedByName.putIfAbsent(baseKey, () => []).add(loc);
+      }
+
+      final List<LocationModel> deduplicatedList = [];
+      for (final entry in groupedByName.entries) {
+        final group = entry.value;
+        // Urutkan kandidat dalam grup yang sama untuk mengambil kota terpenting
+        group.sort((a, b) {
+          final rankA = _calculateInternalRank(a, trimmedQuery, aliases);
+          final rankB = _calculateInternalRank(b, trimmedQuery, aliases);
+          return rankB.compareTo(rankA);
+        });
+        // Ambil hanya 1 kota terbaik untuk nama yang sama persis
+        deduplicatedList.add(group.first);
+      }
+
+      // 6. Urutkan seluruh daftar akhir berdasarkan relevansi pencarian pengguna
+      deduplicatedList.sort((a, b) {
+        final scoreA = _calculateSearchRelevance(a, trimmedQuery, aliases);
+        final scoreB = _calculateSearchRelevance(b, trimmedQuery, aliases);
+        return scoreB.compareTo(scoreA);
       });
 
-      return filteredResults.take(15).toList();
+      return deduplicatedList.take(10).toList();
     } on SocketException {
       throw Exception('Tidak ada koneksi internet. Periksa jaringan Anda.');
     } on TimeoutException {
@@ -166,44 +251,84 @@ class WeatherApiService {
     return [];
   }
 
-  /// Menghitung bobot relevansi kota berdasarkan kecocokan nama, negara, dan populasi
-  int _calculateRelevanceScore(LocationModel loc, String query) {
-    int score = 0;
+  /// Menilai ranking kepentingan kota untuk deduplikasi nama identik
+  int _calculateInternalRank(LocationModel loc, String query, List<String> aliases) {
+    int rank = 0;
+    final admin1Lower = loc.admin1?.toLowerCase() ?? '';
     final nameLower = loc.name.toLowerCase();
-    final adminLower = loc.admin1?.toLowerCase() ?? '';
-    final isIndonesia =
-        loc.countryCode?.toUpperCase() == 'ID' || loc.country?.toLowerCase() == 'indonesia';
 
-    // Prioritas tinggi untuk Indonesia
-    if (isIndonesia) score += 10000;
-
-    // Kecocokan nama kota persis
-    if (nameLower == query) {
-      score += 8000;
-    } else if (nameLower.startsWith(query)) {
-      score += 4000;
-    } else if (nameLower.contains(query)) {
-      score += 2000;
+    // Keselarasan dengan provinsi atau alias pencarian
+    if (admin1Lower.contains(query) || aliases.any((a) => admin1Lower.contains(a))) {
+      rank += 10000000;
     }
 
-    // Kecocokan nama provinsi (misal cari "lampung" maka "Bandarlampung" di "Provinsi Lampung" dapat skor tinggi)
-    if (adminLower.contains(query)) {
-      score += 5000;
-    }
-
-    // Prioritas berdasarkan tipe wilayah administratif Open-Meteo
     final feat = loc.featureCode ?? '';
     if (feat == 'PPLC') {
-      score += 4000; // Ibukota negara (Jakarta, dsb.)
-    } else if (feat.startsWith('PPLA')) {
-      score += 3000; // Ibukota provinsi / kota besar
-    } else if (feat.startsWith('ADM')) {
-      score += 2000; // Wilayah administratif
+      rank += 20000000; // Ibukota negara
+    } else if (feat == 'PPLA') {
+      rank += 15000000; // Ibukota provinsi
+    } else if (feat.startsWith('PPLA2') || nameLower.startsWith('kota ')) {
+      rank += 10000000; // Ibukota kabupaten / kotamadya
+    } else if (feat.startsWith('PPLA3')) {
+      rank += 2000000;
     }
 
-    // Prioritas jumlah penduduk kota
     if (loc.population != null && loc.population! > 0) {
-      score += (loc.population! / 1000).clamp(0, 5000).toInt();
+      rank += loc.population!;
+    }
+
+    return rank;
+  }
+
+  /// Menghitung skor relevansi akhir untuk urutan tampilan
+  int _calculateSearchRelevance(LocationModel loc, String query, List<String> aliases) {
+    int score = 0;
+    final nameLower = loc.name.toLowerCase();
+    final admin1Lower = loc.admin1?.toLowerCase() ?? '';
+    final admin2Lower = loc.admin2?.toLowerCase() ?? '';
+    final feat = loc.featureCode ?? '';
+    final pop = loc.population ?? 0;
+
+    // Kecocokan nama persis atau alias
+    final isExactOrAlias = nameLower == query ||
+        nameLower == 'kota $query' ||
+        nameLower.contains(query) ||
+        aliases.any((alias) => nameLower == alias || nameLower == 'kota $alias' || nameLower.contains(alias));
+
+    if (isExactOrAlias) score += 100000;
+    if (nameLower.startsWith(query) || aliases.any((a) => nameLower.startsWith(a))) score += 30000;
+    if (admin1Lower.contains(query) || admin2Lower.contains(query) || aliases.any((a) => admin1Lower.contains(a))) {
+      score += 50000;
+    }
+
+    // Prioritas status ibukota / kota
+    final isCityOrRegency = feat == 'PPLC' ||
+        feat == 'PPLA' ||
+        feat.startsWith('PPLA2') ||
+        nameLower.startsWith('kota ') ||
+        nameLower.startsWith('kabupaten ');
+
+    if (feat == 'PPLC') {
+      score += 100000;
+    } else if (feat == 'PPLA') {
+      score += 80000;
+    } else if (isCityOrRegency) {
+      score += 50000;
+    } else if (feat.startsWith('PPLA3')) {
+      score += 20000;
+    }
+
+    // Bobot populasi
+    if (pop > 1000000) {
+      score += 60000;
+    } else if (pop > 500000) {
+      score += 45000;
+    } else if (pop > 100000) {
+      score += 35000;
+    } else if (pop > 20000) {
+      score += 20000;
+    } else if (pop > 0) {
+      score += 10000;
     }
 
     return score;
