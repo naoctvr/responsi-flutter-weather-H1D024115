@@ -7,10 +7,16 @@ class LocalStorageService {
   static const String _keyHistory = 'search_history';
   static const String _keyLastLocation = 'last_selected_location';
 
+  SharedPreferences? _cachedPrefs;
+
+  Future<SharedPreferences> _getPrefs() async {
+    return _cachedPrefs ??= await SharedPreferences.getInstance();
+  }
+
   /// Mendapatkan daftar kota favorit dari SharedPreferences
   Future<List<LocationModel>> getFavorites() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       final jsonString = prefs.getString(_keyFavorites);
       if (jsonString == null || jsonString.isEmpty) {
         // Default favorites jika masih kosong (Jakarta & Yogyakarta)
@@ -21,6 +27,7 @@ class LocalStorageService {
             longitude: 106.84513,
             country: 'Indonesia',
             admin1: 'DKI Jakarta',
+            countryCode: 'ID',
           ),
           LocationModel(
             name: 'Yogyakarta',
@@ -28,6 +35,7 @@ class LocalStorageService {
             longitude: 110.3695,
             country: 'Indonesia',
             admin1: 'Daerah Istimewa Yogyakarta',
+            countryCode: 'ID',
           ),
         ];
         await saveFavorites(defaultFavs);
@@ -41,7 +49,7 @@ class LocalStorageService {
 
   /// Menyimpan seluruh list favorit
   Future<void> saveFavorites(List<LocationModel> favorites) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     await prefs.setString(_keyFavorites, LocationModel.encodeList(favorites));
   }
 
@@ -77,7 +85,7 @@ class LocalStorageService {
   /// Mendapatkan riwayat pencarian
   Future<List<LocationModel>> getSearchHistory() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       final jsonString = prefs.getString(_keyHistory);
       if (jsonString == null || jsonString.isEmpty) return [];
       return LocationModel.decodeList(jsonString);
@@ -89,7 +97,7 @@ class LocalStorageService {
   /// Menambah item ke riwayat pencarian (maksimal 10 item terbaru)
   Future<void> addSearchHistory(LocationModel location) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       final list = await getSearchHistory();
       list.removeWhere((loc) => loc == location);
       list.insert(0, location);
@@ -102,20 +110,20 @@ class LocalStorageService {
 
   /// Menghapus seluruh riwayat pencarian
   Future<void> clearSearchHistory() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     await prefs.remove(_keyHistory);
   }
 
   /// Menyimpan lokasi terakhir yang sedang dibuka pengguna
   Future<void> saveLastLocation(LocationModel location) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _getPrefs();
     await prefs.setString(_keyLastLocation, jsonEncode(location.toJson()));
   }
 
   /// Membaca lokasi terakhir yang dibuka pengguna saat aplikasi pertama kali launch
   Future<LocationModel?> getLastLocation() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await _getPrefs();
       final jsonString = prefs.getString(_keyLastLocation);
       if (jsonString == null || jsonString.isEmpty) return null;
       return LocationModel.fromJson(jsonDecode(jsonString));

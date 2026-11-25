@@ -46,6 +46,7 @@ class WeatherViewModel extends ChangeNotifier {
           longitude: 110.3695,
           country: 'Indonesia',
           admin1: 'Daerah Istimewa Yogyakarta',
+          countryCode: 'ID',
         );
       }
 
@@ -76,6 +77,14 @@ class WeatherViewModel extends ChangeNotifier {
     }
   }
 
+  /// Cek ulang status favorit (misal setelah kembali dari SearchScreen)
+  Future<void> checkFavoriteStatus() async {
+    if (_currentLocation != null) {
+      _isFavorite = await _storageService.isFavorite(_currentLocation!);
+      notifyListeners();
+    }
+  }
+
   /// Refresh data cuaca terkini (misalnya saat pull-to-refresh)
   Future<void> refresh() async {
     if (_currentLocation == null) return;
@@ -99,17 +108,19 @@ class WeatherViewModel extends ChangeNotifier {
     _isFavorite = await _storageService.isFavorite(location);
   }
 
-  /// Toggle status favorit untuk lokasi yang sedang tampil
-  Future<void> toggleFavorite() async {
-    if (_currentLocation == null) return;
+  /// Toggle status favorit secara instan (optimistic UI update)
+  Future<bool> toggleFavorite() async {
+    if (_currentLocation == null) return false;
+
+    // Update in-memory seketika agar UI langsung berubah tanpa delay
+    _isFavorite = !_isFavorite;
+    notifyListeners();
 
     if (_isFavorite) {
-      await _storageService.removeFavorite(_currentLocation!);
-      _isFavorite = false;
-    } else {
       await _storageService.addFavorite(_currentLocation!);
-      _isFavorite = true;
+    } else {
+      await _storageService.removeFavorite(_currentLocation!);
     }
-    notifyListeners();
+    return _isFavorite;
   }
 }

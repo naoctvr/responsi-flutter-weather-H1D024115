@@ -53,7 +53,7 @@ class SearchViewModel extends ChangeNotifier {
       final results = await _apiService.searchLocation(_currentQuery);
       _searchResults = results;
       if (results.isEmpty) {
-        _errorMessage = 'Kota "$query" tidak ditemukan. Coba nama lain.';
+        _errorMessage = 'Kota "$query" tidak ditemukan. Coba gunakan nama kota lain.';
       }
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -80,18 +80,20 @@ class SearchViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Menambah kota ke daftar favorit
+  /// Menambah kota ke daftar favorit secara instan (optimistic UI update)
   Future<void> addFavorite(LocationModel location) async {
+    if (!_favoriteLocations.contains(location)) {
+      _favoriteLocations.insert(0, location);
+      notifyListeners();
+    }
     await _storageService.addFavorite(location);
-    _favoriteLocations = await _storageService.getFavorites();
-    notifyListeners();
   }
 
-  /// Menghapus kota dari daftar favorit
+  /// Menghapus kota dari daftar favorit secara instan (optimistic UI update)
   Future<void> removeFavorite(LocationModel location) async {
-    await _storageService.removeFavorite(location);
-    _favoriteLocations = await _storageService.getFavorites();
+    _favoriteLocations.removeWhere((loc) => loc == location);
     notifyListeners();
+    await _storageService.removeFavorite(location);
   }
 
   /// Cek apakah lokasi ini ada di dalam list favorit
@@ -99,19 +101,26 @@ class SearchViewModel extends ChangeNotifier {
     return _favoriteLocations.any((loc) => loc == location);
   }
 
-  /// Toggle favorit dari item hasil pencarian
-  Future<void> toggleFavorite(LocationModel location) async {
-    if (isLocationFavorite(location)) {
-      await removeFavorite(location);
+  /// Toggle favorit dari item hasil pencarian secara instan (0ms response)
+  Future<bool> toggleFavorite(LocationModel location) async {
+    final alreadyFav = isLocationFavorite(location);
+    if (alreadyFav) {
+      _favoriteLocations.removeWhere((loc) => loc == location);
+      notifyListeners();
+      await _storageService.removeFavorite(location);
+      return false; // Sekarang tidak difavoritkan
     } else {
-      await addFavorite(location);
+      _favoriteLocations.insert(0, location);
+      notifyListeners();
+      await _storageService.addFavorite(location);
+      return true; // Sekarang difavoritkan
     }
   }
 
   /// Menghapus riwayat pencarian
   Future<void> clearHistory() async {
-    await _storageService.clearSearchHistory();
     _searchHistory = [];
     notifyListeners();
+    await _storageService.clearSearchHistory();
   }
 }

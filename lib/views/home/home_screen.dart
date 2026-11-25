@@ -32,8 +32,13 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(builder: (context) => const SearchScreen()),
     );
 
-    if (selectedLocation != null && mounted) {
-      context.read<WeatherViewModel>().setLocation(selectedLocation);
+    if (mounted) {
+      final weatherVM = context.read<WeatherViewModel>();
+      if (selectedLocation != null) {
+        weatherVM.setLocation(selectedLocation);
+      } else {
+        weatherVM.checkFavoriteStatus();
+      }
     }
   }
 
@@ -141,7 +146,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     location: location,
                     current: weather.current,
                     isFavorite: weatherVM.isFavorite,
-                    onToggleFavorite: () => weatherVM.toggleFavorite(),
+                    onToggleFavorite: () async {
+                      final isNowFav = await weatherVM.toggleFavorite();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).clearSnackBars();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isNowFav
+                                  ? '⭐ ${location.name} ditambahkan ke favorit'
+                                  : '🗑️ ${location.name} dihapus dari favorit',
+                            ),
+                            duration: const Duration(milliseconds: 1400),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        );
+                      }
+                    },
                   ),
 
                   const SizedBox(height: 24),

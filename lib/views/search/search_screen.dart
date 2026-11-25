@@ -38,6 +38,40 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
+  void _onToggleFavorite(LocationModel location) async {
+    final searchVM = context.read<SearchViewModel>();
+    final isNowFav = await searchVM.toggleFavorite(location);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                isNowFav ? Icons.star_rounded : Icons.star_border_rounded,
+                color: isNowFav ? const Color(0xFFFBBF24) : Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  isNowFav
+                      ? '${location.name} ditambahkan ke favorit'
+                      : '${location.name} dihapus dari favorit',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+          duration: const Duration(milliseconds: 1400),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -62,7 +96,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       context.read<SearchViewModel>().search(query);
                     },
                     decoration: InputDecoration(
-                      hintText: 'Cari nama kota (misal: Bandung, Tokyo)...',
+                      hintText: 'Cari kota (misal: Lampung, Jambi, Tokyo)...',
                       prefixIcon: const Icon(Icons.search_rounded),
                       suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
@@ -113,13 +147,16 @@ class _SearchScreenState extends State<SearchScreen> {
                       children: [
                         CircularProgressIndicator(),
                         SizedBox(height: 16),
-                        Text('Mencari lokasi dari Open-Meteo...'),
+                        Text(
+                          'Mencari lokasi dari Open-Meteo...',
+                          style: TextStyle(fontSize: 14),
+                        ),
                       ],
                     ),
                   );
                 }
 
-                // Jika sedang ada query dan hasil pencarian tersedia
+                // Jika sedang ada query pencarian
                 if (_searchController.text.isNotEmpty) {
                   if (searchVM.errorMessage != null && searchVM.searchResults.isEmpty) {
                     return Center(
@@ -154,7 +191,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  /// Menampilkan hasil pencarian dari Open-Meteo API
+  /// Menampilkan hasil pencarian dari Open-Meteo API yang telah diurutkan relevansinya
   Widget _buildSearchResultsList(SearchViewModel searchVM, bool isDark) {
     final results = searchVM.searchResults;
 
@@ -169,9 +206,14 @@ class _SearchScreenState extends State<SearchScreen> {
         return Card(
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: const CircleAvatar(
-              backgroundColor: Color(0x1F2563EB),
-              child: Icon(Icons.location_city, color: AppColors.primary),
+            leading: CircleAvatar(
+              backgroundColor: const Color(0x1F2563EB),
+              child: Icon(
+                location.countryCode?.toUpperCase() == 'ID' || location.country?.toLowerCase() == 'indonesia'
+                    ? Icons.location_city_rounded
+                    : Icons.public_rounded,
+                color: AppColors.primary,
+              ),
             ),
             title: Text(
               location.name,
@@ -190,12 +232,11 @@ class _SearchScreenState extends State<SearchScreen> {
                 IconButton(
                   icon: Icon(
                     isFav ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                    color: isFav ? const Color(0xFFFBBF24) : Colors.grey,
+                    color: isFav ? const Color(0xFFFBBF24) : Colors.grey.shade400,
+                    size: 26,
                   ),
                   tooltip: isFav ? 'Hapus dari favorit' : 'Tambah ke favorit',
-                  onPressed: () {
-                    searchVM.toggleFavorite(location);
-                  },
+                  onPressed: () => _onToggleFavorite(location),
                 ),
                 const Icon(Icons.chevron_right, color: Colors.grey),
               ],
@@ -252,7 +293,7 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
               child: const Center(
                 child: Text(
-                  'Belum ada lokasi favorit tersimpan.\nKlik ikon bookmark untuk menyimpan.',
+                  'Belum ada lokasi favorit tersimpan.\nKlik ikon bookmark untuk menyimpan kota favorit.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 13, color: Colors.grey),
                 ),
@@ -289,7 +330,17 @@ class _SearchScreenState extends State<SearchScreen> {
                         IconButton(
                           icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
                           tooltip: 'Hapus dari Favorit',
-                          onPressed: () => searchVM.removeFavorite(location),
+                          onPressed: () {
+                            searchVM.removeFavorite(location);
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${location.name} dihapus dari favorit'),
+                                duration: const Duration(seconds: 1),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
                         ),
                         const Icon(Icons.chevron_right, color: Colors.grey),
                       ],
