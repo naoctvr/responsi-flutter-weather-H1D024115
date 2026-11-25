@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/weather_code_helper.dart';
 import '../../../models/location_model.dart';
 import '../../../models/weather_model.dart';
+import 'cute_weather_mascot.dart';
 
 class CurrentWeatherCard extends StatelessWidget {
   final LocationModel location;
@@ -20,186 +22,158 @@ class CurrentWeatherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gradientColors = WeatherCodeHelper.getGradient(current.weatherCode);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? AppColors.mainCardBgDark : AppColors.mainCardBgLight;
     final weatherDesc = WeatherCodeHelper.getDescription(current.weatherCode);
-    final weatherIcon = WeatherCodeHelper.getIcon(current.weatherCode);
-    final dateStr = DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(current.time);
+    final dateStr = DateFormat('EEEE, d MMM', 'id_ID').format(current.time);
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradientColors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
+        color: cardBg,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: const [
           BoxShadow(
-            color: gradientColors.first.withAlpha(90),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Color(0x0A000000),
+            blurRadius: 16,
+            offset: Offset(0, 6),
           ),
         ],
       ),
-      child: Stack(
+      padding: const EdgeInsets.all(22.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Background decorative circle
-          Positioned(
-            right: -30,
-            top: -30,
-            child: Container(
-              width: 140,
-              height: 140,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0x14FFFFFF),
+          // Top Row: Tag "CUACA SAAT INI" + Bookmark Button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withAlpha(20) : Colors.black.withAlpha(12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'CUACA SAAT INI',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: isDark ? Colors.white70 : const Color(0xFF4B5563),
+                  ),
+                ),
               ),
-            ),
+              InkWell(
+                onTap: onToggleFavorite,
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF2E3848) : Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x0A000000),
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    isFavorite ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                    color: isFavorite ? AppColors.starGold : Colors.grey.shade400,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
           ),
 
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Location & Favorite Button Row
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.location_on,
-                                color: Colors.white,
-                                size: 22,
-                              ),
-                              const SizedBox(width: 6),
-                              Flexible(
-                                child: Text(
-                                  location.name,
-                                  style: const TextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                    letterSpacing: -0.5,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 28),
-                            child: Text(
-                              location.subtitle,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Color(0xD9FFFFFF),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 28),
-                            child: Text(
-                              dateStr,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xB3FFFFFF),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        isFavorite ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                        color: isFavorite ? const Color(0xFFFBBF24) : Colors.white,
-                        size: 28,
-                      ),
-                      tooltip: isFavorite ? 'Hapus dari Favorit' : 'Simpan ke Favorit',
-                      onPressed: onToggleFavorite,
-                    ),
-                  ],
-                ),
+          const SizedBox(height: 12),
 
-                const SizedBox(height: 24),
-
-                // Main Temperature & Weather Icon Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              current.temperature.round().toString(),
-                              style: const TextStyle(
-                                fontSize: 72,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                height: 1.0,
-                              ),
-                            ),
-                            const Text(
-                              '°C',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.white70,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          weatherDesc,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Terasa seperti ${current.apparentTemperature.round()}°C',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xD9FFFFFF),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // Big Weather Icon
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: const BoxDecoration(
-                        color: Color(0x26FFFFFF),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        weatherIcon,
-                        size: 64,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+          // City Name & Subtitle
+          Text(
+            location.name,
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: isDark ? Colors.white : AppColors.textPrimaryLight,
+              letterSpacing: -0.6,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${location.subtitle} • $dateStr',
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+
+          const SizedBox(height: 20),
+
+          // Temperature, Condition, and Mascot
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        current.temperature.round().toString(),
+                        style: TextStyle(
+                          fontSize: 64,
+                          fontWeight: FontWeight.w800,
+                          height: 1.0,
+                          color: isDark ? Colors.white : AppColors.textPrimaryLight,
+                          letterSpacing: -2,
+                        ),
+                      ),
+                      Text(
+                        '°',
+                        style: TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.w400,
+                          color: isDark ? Colors.white70 : Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    weatherDesc,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : AppColors.textPrimaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Terasa seperti ${current.apparentTemperature.round()}°',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              ),
+
+              // Cute Mascot
+              CuteWeatherMascot(
+                weatherCode: current.weatherCode,
+                size: 96,
+              ),
+            ],
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/app_colors.dart';
 
 class WeatherLoadingView extends StatelessWidget {
   const WeatherLoadingView({super.key});
@@ -6,7 +7,7 @@ class WeatherLoadingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final placeholderColor = isDark ? const Color(0xFF1E293B) : Colors.grey.shade200;
+    final placeholderColor = isDark ? AppColors.surfaceDark : Colors.white;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -17,54 +18,70 @@ class WeatherLoadingView extends StatelessWidget {
             height: 220,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: placeholderColor,
-              borderRadius: BorderRadius.circular(28),
+              color: isDark ? AppColors.mainCardBgDark : AppColors.mainCardBgLight,
+              borderRadius: BorderRadius.circular(30),
             ),
             child: const Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(),
+                  CircularProgressIndicator(strokeWidth: 3),
                   SizedBox(height: 16),
                   Text(
                     'Mengambil data cuaca...',
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Detail Grid Placeholder
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.7,
-            children: List.generate(
-              4,
-              (index) => Container(
-                decoration: BoxDecoration(
-                  color: placeholderColor,
-                  borderRadius: BorderRadius.circular(18),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 90,
+                  decoration: BoxDecoration(
+                    color: AppColors.pastelBlueBg,
+                    borderRadius: BorderRadius.circular(22),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  height: 90,
+                  decoration: BoxDecoration(
+                    color: AppColors.pastelGreenBg,
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  height: 90,
+                  decoration: BoxDecoration(
+                    color: AppColors.pastelPinkBg,
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
           // Forecast List Placeholder
           Container(
-            height: 200,
+            height: 220,
             decoration: BoxDecoration(
               color: placeholderColor,
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(26),
             ),
           ),
         ],

@@ -50,7 +50,7 @@ class _SearchScreenState extends State<SearchScreen> {
             children: [
               Icon(
                 isNowFav ? Icons.star_rounded : Icons.star_border_rounded,
-                color: isNowFav ? const Color(0xFFFBBF24) : Colors.white,
+                color: isNowFav ? AppColors.starGold : Colors.white,
                 size: 20,
               ),
               const SizedBox(width: 10),
@@ -59,14 +59,14 @@ class _SearchScreenState extends State<SearchScreen> {
                   isNowFav
                       ? '${location.name} ditambahkan ke favorit'
                       : '${location.name} dihapus dari favorit',
-                  style: const TextStyle(fontWeight: FontWeight.w500),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
           ),
           duration: const Duration(milliseconds: 1400),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       );
     }
@@ -82,9 +82,9 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       body: Column(
         children: [
-          // 1. Search Bar Input
+          // 1. Cute Search Bar Input
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            padding: const EdgeInsets.fromLTRB(18, 6, 18, 14),
             child: Row(
               children: [
                 Expanded(
@@ -97,7 +97,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     },
                     decoration: InputDecoration(
                       hintText: 'Cari kota (misal: Lampung, Jambi, Tokyo)...',
-                      prefixIcon: const Icon(Icons.search_rounded),
+                      prefixIcon: const Icon(Icons.search_rounded, size: 22),
                       suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.clear_rounded, size: 20),
@@ -116,20 +116,25 @@ class _SearchScreenState extends State<SearchScreen> {
                     },
                   ),
                 ),
-                const SizedBox(width: 8),
-                IconButton.filled(
-                  icon: const Icon(Icons.arrow_forward_rounded),
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  tooltip: 'Cari',
-                  onPressed: () {
+                const SizedBox(width: 10),
+                InkWell(
+                  onTap: () {
                     context.read<SearchViewModel>().search(_searchController.text);
                   },
+                  borderRadius: BorderRadius.circular(22),
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white : AppColors.darkPill,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward_rounded,
+                      color: isDark ? AppColors.darkPill : Colors.white,
+                      size: 22,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -145,11 +150,11 @@ class _SearchScreenState extends State<SearchScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        CircularProgressIndicator(),
+                        CircularProgressIndicator(strokeWidth: 3),
                         SizedBox(height: 16),
                         Text(
                           'Mencari lokasi dari Open-Meteo...',
-                          style: TextStyle(fontSize: 14),
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -161,16 +166,24 @@ class _SearchScreenState extends State<SearchScreen> {
                   if (searchVM.errorMessage != null && searchVM.searchResults.isEmpty) {
                     return Center(
                       child: Padding(
-                        padding: const EdgeInsets.all(24.0),
+                        padding: const EdgeInsets.all(28.0),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.location_off, size: 48, color: Colors.grey),
-                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(18),
+                              decoration: const BoxDecoration(
+                                color: AppColors.pastelPinkBg,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.location_off_rounded,
+                                  size: 38, color: AppColors.pastelPinkText),
+                            ),
+                            const SizedBox(height: 14),
                             Text(
                               searchVM.errorMessage!,
                               textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 14),
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -191,14 +204,14 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  /// Menampilkan hasil pencarian dari Open-Meteo API yang telah diurutkan relevansinya
+  /// Menampilkan hasil pencarian dari Open-Meteo API yang telah diurutkan
   Widget _buildSearchResultsList(SearchViewModel searchVM, bool isDark) {
     final results = searchVM.searchResults;
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
       itemCount: results.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 8),
+      separatorBuilder: (context, index) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final location = results[index];
         final isFav = searchVM.isLocationFavorite(location);
@@ -206,24 +219,27 @@ class _SearchScreenState extends State<SearchScreen> {
         return Card(
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: CircleAvatar(
-              backgroundColor: const Color(0x1F2563EB),
-              child: Icon(
-                location.countryCode?.toUpperCase() == 'ID' || location.country?.toLowerCase() == 'indonesia'
-                    ? Icons.location_city_rounded
-                    : Icons.public_rounded,
-                color: AppColors.primary,
+            leading: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: const BoxDecoration(
+                color: AppColors.pastelBlueBg,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.location_city_rounded,
+                color: AppColors.pastelBlueText,
+                size: 20,
               ),
             ),
             title: Text(
               location.name,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
             ),
             subtitle: Text(
               location.subtitle,
               style: TextStyle(
                 color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                fontSize: 13,
+                fontSize: 12,
               ),
             ),
             trailing: Row(
@@ -232,13 +248,13 @@ class _SearchScreenState extends State<SearchScreen> {
                 IconButton(
                   icon: Icon(
                     isFav ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                    color: isFav ? const Color(0xFFFBBF24) : Colors.grey.shade400,
-                    size: 26,
+                    color: isFav ? AppColors.starGold : Colors.grey.shade400,
+                    size: 24,
                   ),
                   tooltip: isFav ? 'Hapus dari favorit' : 'Tambah ke favorit',
                   onPressed: () => _onToggleFavorite(location),
                 ),
-                const Icon(Icons.chevron_right, color: Colors.grey),
+                const Icon(Icons.chevron_right_rounded, color: Colors.grey),
               ],
             ),
             onTap: () => _onSelectLocation(location),
@@ -251,7 +267,7 @@ class _SearchScreenState extends State<SearchScreen> {
   /// Menampilkan daftar lokasi favorit dan riwayat pencarian (dari Local Storage)
   Widget _buildFavoritesAndHistory(SearchViewModel searchVM, bool isDark) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -259,24 +275,39 @@ class _SearchScreenState extends State<SearchScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.bookmark_rounded, color: Color(0xFFFBBF24), size: 22),
-                  SizedBox(width: 8),
-                  Text(
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: AppColors.pastelYellowBg,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.star_rounded, color: AppColors.starGold, size: 18),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
                     'Lokasi Favorit',
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ],
               ),
-              Text(
-                '${searchVM.favoriteLocations.length} Kota',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withAlpha(20) : Colors.black.withAlpha(8),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${searchVM.favoriteLocations.length} Kota',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
                 ),
               ),
             ],
@@ -285,11 +316,11 @@ class _SearchScreenState extends State<SearchScreen> {
 
           if (searchVM.favoriteLocations.isEmpty)
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(22),
               width: double.infinity,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(16),
+                color: isDark ? AppColors.surfaceDark : Colors.white,
+                borderRadius: BorderRadius.circular(22),
               ),
               child: const Center(
                 child: Text(
@@ -309,13 +340,17 @@ class _SearchScreenState extends State<SearchScreen> {
                 final location = searchVM.favoriteLocations[index];
                 return Card(
                   child: ListTile(
-                    leading: const CircleAvatar(
-                      backgroundColor: Color(0x26FBBF24),
-                      child: Icon(Icons.star_rounded, color: Color(0xFFFBBF24)),
+                    leading: Container(
+                      padding: const EdgeInsets.all(9),
+                      decoration: const BoxDecoration(
+                        color: AppColors.pastelYellowBg,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.star_rounded, color: AppColors.starGold, size: 20),
                     ),
                     title: Text(
                       location.name,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     subtitle: Text(
                       location.subtitle,
@@ -342,7 +377,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             );
                           },
                         ),
-                        const Icon(Icons.chevron_right, color: Colors.grey),
+                        const Icon(Icons.chevron_right_rounded, color: Colors.grey),
                       ],
                     ),
                     onTap: () => _onSelectLocation(location),
@@ -357,15 +392,22 @@ class _SearchScreenState extends State<SearchScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.history_rounded, color: AppColors.primary, size: 22),
-                  SizedBox(width: 8),
-                  Text(
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: AppColors.pastelBlueBg,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.history_rounded, color: AppColors.pastelBlueText, size: 18),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
                     'Riwayat Pencarian',
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ],
@@ -373,7 +415,7 @@ class _SearchScreenState extends State<SearchScreen> {
               if (searchVM.searchHistory.isNotEmpty)
                 TextButton(
                   onPressed: () => searchVM.clearHistory(),
-                  child: const Text('Hapus Semua', style: TextStyle(fontSize: 12)),
+                  child: const Text('Hapus Semua', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                 ),
             ],
           ),
@@ -381,11 +423,11 @@ class _SearchScreenState extends State<SearchScreen> {
 
           if (searchVM.searchHistory.isEmpty)
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(22),
               width: double.infinity,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(16),
+                color: isDark ? AppColors.surfaceDark : Colors.white,
+                borderRadius: BorderRadius.circular(22),
               ),
               child: const Center(
                 child: Text(
@@ -404,13 +446,17 @@ class _SearchScreenState extends State<SearchScreen> {
                 final location = searchVM.searchHistory[index];
                 return Card(
                   child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.grey.withAlpha(30),
-                      child: const Icon(Icons.history, color: Colors.grey),
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: Color(0x14000000),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.history_rounded, color: Colors.grey, size: 18),
                     ),
                     title: Text(
                       location.name,
-                      style: const TextStyle(fontWeight: FontWeight.w500),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(
                       location.subtitle,
@@ -419,7 +465,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       ),
                     ),
-                    trailing: const Icon(Icons.north_west_rounded, size: 18, color: Colors.grey),
+                    trailing: const Icon(Icons.north_west_rounded, size: 16, color: Colors.grey),
                     onTap: () => _onSelectLocation(location),
                   ),
                 );

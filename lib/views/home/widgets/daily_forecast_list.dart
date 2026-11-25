@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/weather_code_helper.dart';
 import '../../../models/weather_model.dart';
 
@@ -14,8 +15,7 @@ class DailyForecastList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final cardBg = isDark ? AppColors.surfaceDark : Colors.white;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -23,18 +23,28 @@ class DailyForecastList extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Perkiraan Cuaca 7 Hari',
+            Text(
+              'Perkiraan 7 Hari',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
+                color: isDark ? Colors.white : AppColors.textPrimaryLight,
+                letterSpacing: -0.3,
               ),
             ),
-            Text(
-              '${dailyList.length} Hari ke Depan',
-              style: TextStyle(
-                fontSize: 12,
-                color: textSecondary,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withAlpha(20) : Colors.black.withAlpha(8),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '7 Hari ke Depan',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white70 : AppColors.textSecondaryLight,
+                ),
               ),
             ),
           ],
@@ -43,11 +53,11 @@ class DailyForecastList extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(26),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x08000000),
-                blurRadius: 10,
+                blurRadius: 14,
                 offset: Offset(0, 4),
               ),
             ],
@@ -81,109 +91,99 @@ class DailyForecastList extends StatelessWidget {
                   children: [
                     // Day & Date
                     SizedBox(
-                      width: 90,
+                      width: 85,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             dayName,
                             style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: isToday ? FontWeight.w700 : FontWeight.w600,
+                              fontSize: 13,
+                              fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
                               color: isToday
                                   ? const Color(0xFF2563EB)
-                                  : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                                  : (isDark ? Colors.white : AppColors.textPrimaryLight),
                             ),
                           ),
                           Text(
                             dateStr,
                             style: TextStyle(
                               fontSize: 11,
-                              color: textSecondary,
+                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                             ),
                           ),
                         ],
                       ),
                     ),
 
-                    // Weather Icon & Description
+                    // Weather Icon with soft circle + description
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: AppColors.pastelBlueBg.withAlpha(isDark ? 50 : 255),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        weatherIcon,
+                        size: 18,
+                        color: AppColors.pastelBlueText,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: Row(
-                        children: [
-                          Icon(
-                            weatherIcon,
-                            size: 24,
-                            color: const Color(0xFF38BDF8),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              weatherDesc,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: isDark ? Colors.white70 : const Color(0xFF334155),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        weatherDesc,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white70 : const Color(0xFF374151),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
 
-                    // Rain Chance
+                    // Rain Chance Pill
                     if (forecast.precipitationProbabilityMax > 0)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         margin: const EdgeInsets.only(right: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0x1F38BDF8),
-                          borderRadius: BorderRadius.circular(6),
+                          color: AppColors.pastelBlueBg,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.water_drop,
-                              size: 10,
-                              color: Color(0xFF0284C7),
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              '${forecast.precipitationProbabilityMax}%',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF0284C7),
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          '${forecast.precipitationProbabilityMax}%',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.pastelBlueText,
+                          ),
                         ),
                       ),
 
-                    // Min / Max Temperature
-                    SizedBox(
-                      width: 75,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            '${forecast.maxTemp.round()}°',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
+                    // Temperature Max / Min
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${forecast.maxTemp.round()}°',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : AppColors.textPrimaryLight,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${forecast.minTemp.round()}°',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: textSecondary,
-                            ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${forecast.minTemp.round()}°',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
