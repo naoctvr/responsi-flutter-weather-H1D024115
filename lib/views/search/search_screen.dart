@@ -78,11 +78,11 @@ class _SearchScreenState extends State<SearchScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cari & Kelola Lokasi'),
+        title: const Text('Cari Kota'),
       ),
       body: Column(
         children: [
-          // 1. Cute Search Bar Input
+          // 1. Search Bar Input
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 6, 18, 14),
             child: Row(
@@ -140,7 +140,7 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
 
-          // 2. Search Results OR Favorites & History
+          // 2. Search Results OR Riwayat Pencarian Saja
           Expanded(
             child: Consumer<SearchViewModel>(
               builder: (context, searchVM, _) {
@@ -176,8 +176,11 @@ class _SearchScreenState extends State<SearchScreen> {
                                 color: AppColors.pastelPinkBg,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.location_off_rounded,
-                                  size: 38, color: AppColors.pastelPinkText),
+                              child: const Icon(
+                                Icons.location_off_rounded,
+                                size: 38,
+                                color: AppColors.pastelPinkText,
+                              ),
                             ),
                             const SizedBox(height: 14),
                             Text(
@@ -194,8 +197,8 @@ class _SearchScreenState extends State<SearchScreen> {
                   return _buildSearchResultsList(searchVM, isDark);
                 }
 
-                // Default view: Tab / Tampilan Favorit & Riwayat
-                return _buildFavoritesAndHistory(searchVM, isDark);
+                // Default view: Murni Riwayat Pencarian Saja
+                return _buildSearchHistoryOnly(searchVM, isDark);
               },
             ),
           ),
@@ -204,7 +207,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  /// Menampilkan hasil pencarian dari Open-Meteo API yang telah diurutkan
+  /// Menampilkan hasil pencarian dari Open-Meteo API
   Widget _buildSearchResultsList(SearchViewModel searchVM, bool isDark) {
     final results = searchVM.searchResults;
 
@@ -264,131 +267,13 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  /// Menampilkan daftar lokasi favorit dan riwayat pencarian (dari Local Storage)
-  Widget _buildFavoritesAndHistory(SearchViewModel searchVM, bool isDark) {
+  /// Menampilkan riwayat pencarian kota saja (dari Local Storage)
+  Widget _buildSearchHistoryOnly(SearchViewModel searchVM, bool isDark) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- SEKSI 1: LOKASI FAVORIT ---
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: AppColors.pastelYellowBg,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.star_rounded, color: AppColors.starGold, size: 18),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Lokasi Favorit',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withAlpha(20) : Colors.black.withAlpha(8),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${searchVM.favoriteLocations.length} Kota',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          if (searchVM.favoriteLocations.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(22),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceDark : Colors.white,
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: const Center(
-                child: Text(
-                  'Belum ada lokasi favorit tersimpan.\nKlik ikon bookmark untuk menyimpan kota favorit.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: Colors.grey),
-                ),
-              ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: searchVM.favoriteLocations.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final location = searchVM.favoriteLocations[index];
-                return Card(
-                  child: ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(9),
-                      decoration: const BoxDecoration(
-                        color: AppColors.pastelYellowBg,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.star_rounded, color: AppColors.starGold, size: 20),
-                    ),
-                    title: Text(
-                      location.name,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    subtitle: Text(
-                      location.subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                      ),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
-                          tooltip: 'Hapus dari Favorit',
-                          onPressed: () {
-                            searchVM.removeFavorite(location);
-                            ScaffoldMessenger.of(context).clearSnackBars();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${location.name} dihapus dari favorit'),
-                                duration: const Duration(seconds: 1),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
-                        ),
-                        const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-                      ],
-                    ),
-                    onTap: () => _onSelectLocation(location),
-                  ),
-                );
-              },
-            ),
-
-          const SizedBox(height: 28),
-
-          // --- SEKSI 2: RIWAYAT PENCARIAN ---
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -400,7 +285,11 @@ class _SearchScreenState extends State<SearchScreen> {
                       color: AppColors.pastelBlueBg,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.history_rounded, color: AppColors.pastelBlueText, size: 18),
+                    child: const Icon(
+                      Icons.history_rounded,
+                      color: AppColors.pastelBlueText,
+                      size: 18,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   const Text(
@@ -415,25 +304,40 @@ class _SearchScreenState extends State<SearchScreen> {
               if (searchVM.searchHistory.isNotEmpty)
                 TextButton(
                   onPressed: () => searchVM.clearHistory(),
-                  child: const Text('Hapus Semua', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                  child: const Text(
+                    'Hapus Semua',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
 
           if (searchVM.searchHistory.isEmpty)
             Container(
-              padding: const EdgeInsets.all(22),
+              padding: const EdgeInsets.all(28),
               width: double.infinity,
               decoration: BoxDecoration(
                 color: isDark ? AppColors.surfaceDark : Colors.white,
                 borderRadius: BorderRadius.circular(22),
               ),
-              child: const Center(
-                child: Text(
-                  'Riwayat pencarian masih kosong.',
-                  style: TextStyle(fontSize: 13, color: Colors.grey),
-                ),
+              child: const Column(
+                children: [
+                  Icon(Icons.manage_search_rounded, size: 44, color: Colors.grey),
+                  SizedBox(height: 10),
+                  Text(
+                    'Riwayat pencarian masih kosong.',
+                    style: TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w500),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Ketik nama kota di atas untuk mulai mencari.',
+                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                ],
               ),
             )
           else
