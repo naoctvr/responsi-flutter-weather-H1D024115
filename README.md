@@ -157,9 +157,10 @@ Aplikasi mengimplementasikan **SharedPreferences** melalui `LocalStorageService`
 
 ## 📸 Tampilan Layar (Screenshots)
 
-| Home Screen (Kondisi Cuaca & Ramalan 7 Hari) | Search Screen (Pencarian & Kelola Lokasi) |
-|:---:|:---:|
-| <img src="assets/screenshots/home_screen.png" width="280" alt="Home Screen" /> | <img src="assets/screenshots/search_screen.png" width="280" alt="Search Screen" /> |
+| Home Screen Kondisi Cuaca | Home Screen 7 Hari kedepan) | Search Screen (Pencarian & Kelola Lokasi) | Kota Favorit |
+|:---:|:---:|:---:|:---:|
+| <img width="720" height="1600" alt="WhatsApp Image 2026-11-26 at 05 59 31" src="https://github.com/user-attachments/assets/a30df98f-75bd-4f7d-9610-887740f0fb0c" /> |<img width="720" height="1600" alt="WhatsApp Image 2026-11-26 at 05 59 31 (1)" src="https://github.com/user-attachments/assets/cfb7a7e5-3d51-4149-81c1-618841f53852" /> | <img width="720" height="1600" alt="WhatsApp Image 2026-11-26 at 05 59 32" src="https://github.com/user-attachments/assets/e6997ca1-22fc-4356-a6fe-8037632f28e3" /> | <img width="720" height="1600" alt="WhatsApp Image 2026-11-26 at 05 59 31 (2)" src="https://github.com/user-attachments/assets/80f17922-849c-4514-9e89-0e74ca2ac179" /> |
+
 
 ---
 
