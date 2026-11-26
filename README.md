@@ -6,6 +6,8 @@ Shift KRS: I
 
 Shift Sekarang: E
 
+Link Yt: https://youtu.be/Sva2ke7wJk4?si=E12A6q-BVBjvrLDO
+
 ---
 
 # 🌤️ Responsi Flutter - Aplikasi Cuaca (Weather App)
